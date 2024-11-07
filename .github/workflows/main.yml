@@ -6,12 +6,14 @@ on:
  pull_request:
    branches: [ StarterCodeDrafts ] # the Github Action will activate "on" the event that you "push" to the repo
 
-jobs: # the things being executed
- tests: # the name of your status check, will become important when you do branch protection
-   runs-on: ubuntu-latest # which device on Github's server that you are running the Actions on
-   steps:
-     - uses: actions/checkout@v4 # using version 4 of Actions
-     - name: Install Dependencies
-       run: npm install
-     - name: Unit Test
-       run: npm test # the actual testing line
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Dependencies
+        run: npm install
+        working-directory: ./client
+      - name: Unit Test
+        run: npm test
+        working-directory: ./client
