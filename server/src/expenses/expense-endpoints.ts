@@ -1,16 +1,27 @@
+import { Database } from "sqlite";
 import { createExpenseServer, deleteExpense, getExpenses } from "./expense-utils";
-import { Express } from "express";
+import { Request, Response } from 'express';
 
-export function createExpenseEndpoints(app: Express) {
-    app.post("/expenses", (req, res) => {
-        createExpenseServer(req, res); // Call without passing an `expenses` argument
-    });
+export function createExpenseEndpoints(app: any, db: Database) {
+   // Create a new expense
+   app.post("/expenses", (req: Request, res: Response) => {
 
-    app.delete("/expenses/:id", (req, res) => {
-        deleteExpense(req, res);
-    });
+       createExpenseServer(req, res, db);
 
-    app.get("/expenses", (req, res) => {
-        getExpenses(req, res);
-    });
+   });
+
+   // Delete an expense
+   app.delete("/expenses/:id", (req: Request, res: Response) => {
+
+       deleteExpense(req, res, db);
+
+   });
+
+   // Get all expenses
+   app.get("/expenses", (req: Request, res: Response) => {
+
+       getExpenses(req, res, db);
+
+   });
+
 }

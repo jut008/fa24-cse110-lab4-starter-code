@@ -1,37 +1,50 @@
-import { expenses, getNextExpenseId } from "../constants";
+import { Database } from "sqlite";
 import { Request, Response } from "express";
 import { Expense } from "../types"; // Adjust this import to your project structure
 
-export function createExpenseServer(req: Request, res: Response) {
-    const { description, cost } = req.body;
+export async function createExpenseServer(req: Request, res: Response, db: Database) {
 
-    if (!description || cost === undefined) {
-        return res.status(400).send({ error: "Missing required fields" });
-    }
-
-    const newExpense: Expense = {
-        id: getNextExpenseId().toString(), // Convert id to string
-        description,
-        cost,
+    try {
+        // Type casting the request body to the expected format.
+        const { id, cost, description } = req.body as { id: string, cost: number, description: string };
+ 
+        if (!description || !id || !cost) {
+            return res.status(400).send({ error: "Missing required fields" });
+        }
+ 
+        await db.run('INSERT INTO expenses (id, description, cost) VALUES (?, ?, ?);', [id, description, cost]);
+        res.status(201).send({ id, description, cost });
+ 
+    } catch (error) {
+ 
+        return res.status(400).send({ error: `Expense could not be created, + ${error}` });
     };
+ 
+ }
+ 
 
-    expenses.push(newExpense);
-    res.status(201).send(newExpense);
+ export async function getExpenses(req: Request, res: Response, db: Database) {
+    try {
+        const expenses: Expense[] = await db.all("SELECT * FROM expenses;");
+        res.status(200).send({ data: expenses }); // Returning an object with data key for consistency
+    } catch (error) {
+        res.status(500).send({ error: "Failed to retrieve expenses" });
+    }
 }
 
-export function deleteExpense(req: Request, res: Response) {
+export async function deleteExpense(req: Request, res: Response, db: Database) {
     const { id } = req.params;
 
-    const index = expenses.findIndex((expense) => expense.id === id);
+    try {
+        const expense = await db.get("SELECT * FROM expenses WHERE id = ?", [id]);
 
-    if (index === -1) { 
-        return res.status(404).send({ error: "Expense not found" });
+        if (!expense) {
+            return res.status(404).send({ error: "Expense not found" });
+        }
+
+        await db.run("DELETE FROM expenses WHERE id = ?", [id]);
+        res.status(200).send({ message: "Expense deleted successfully" }); // Returning a message key for consistency
+    } catch (error) {
+        res.status(500).send({ error: "Failed to delete expense" });
     }
-
-    expenses.splice(index, 1); // Remove the expense from the array
-    res.status(200).send({ message: "Expense deleted successfully" });
-}
-
-export function getExpenses(req: Request, res: Response) {
-    res.status(200).send({ data: expenses }); // Send the current expenses array
 }

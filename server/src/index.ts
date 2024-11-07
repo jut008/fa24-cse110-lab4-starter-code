@@ -1,6 +1,8 @@
-import { Request, Response } from "express";
+import { Response } from "express";
+import { createBudgetEndpoints } from "./budget/budget-endpoints";
 import { createExpenseEndpoints } from "./expenses/expense-endpoints";
-import { getBudget, updateBudget } from "./budget/budget-utils";
+import { budget } from "./constants";
+import initDB from "./createTable";
 
 const express = require("express");
 const cors = require("cors");
@@ -13,24 +15,20 @@ app.use(express.json());
 
 // Start the server
 app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+ console.log(`Server running at http://localhost:${port}`);
 });
 
-// Root endpoint to test if the server is running
-app.get("/", (req: Request, res: Response) => {
-  res.send({ data: "Hello, TypeScript Express!" });
-  res.status(200);
-});
+// Initialize the database and start the server
+(async () => {
+ const db = await initDB();
 
-// Define the `/budget` GET endpoint
-app.get("/budget", (req: Request, res: Response) => {
-  getBudget(res);
-});
+ // Root endpoint to get test if the server is running
+ app.get("/", (res: Response) => {
+   res.send({ "data": "Hello, TypeScript Express!" });
+   res.status(200);
+ });
 
-// Define the `/budget` PUT endpoint
-app.put("/budget", (req: Request, res: Response) => {
-  updateBudget(res, req.body); // Pass `res` and `req.body` to updateBudget
-});
+ createExpenseEndpoints(app, db);
 
-// Initialize expense endpoints
-createExpenseEndpoints(app);
+ createBudgetEndpoints(app, budget);
+})();
